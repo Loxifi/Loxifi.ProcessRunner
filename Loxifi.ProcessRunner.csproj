@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<PackageProjectUrl>http://loxifi.com/Projects/Loxifi.ProcessRunner</PackageProjectUrl>
+		<Version>0.1.2</Version>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageIcon>Properties\Icon.png</PackageIcon>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Description>
+			Process Runner allows for executing processes without some of the issues found with the standard framework Process class.
+
+			It resolves issues with capturing process output, an absolute reliability nightmare with the framework process.
+
+			It also allows for executing processes using NetOnly credentials, which allows you to run processes against domain machines as you might using RunAs.
+
+			Additional information will be provided on full release
+		</Description>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseFile>Properties\License.txt</PackageLicenseFile>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/Loxifi/Loxifi.ProcessRunner.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<RootNamespace>Loxifi</RootNamespace>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="Properties\License.txt" Pack="true" PackagePath="Properties\License.txt" />
+		<None Include="Properties\Icon.png" Pack="true" PackagePath="Properties\Icon.png" />
+		<None Include="README.md" Pack="true" PackagePath="README.md" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Loxifi.CompressedFileWriter" Version="0.1.0" />
+		<PackageReference Include="Loxifi.Extensions.StringExtensions" Version="0.1.0" />
+		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+	</ItemGroup>
+</Project>

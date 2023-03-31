@@ -91,6 +91,9 @@ namespace Loxifi
 				catch (InvalidOperationException ex) when (ex.Message.Contains("has exited"))
 				{
 				}
+				catch (ArgumentException ex) when (ex.Message.Contains("is not running"))
+				{
+				}
 				catch (Exception ex)
 				{
 					Debug.Write(ex.Message);

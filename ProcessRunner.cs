@@ -1,7 +1,6 @@
 ﻿using Loxifi.Data;
 using Loxifi.Services;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -11,12 +10,13 @@ namespace Loxifi
 	public static class ProcessRunner
 	{
 		internal const int STARTF_USESHOWWINDOW = 1;
+
 		internal const int STARTF_USESTDHANDLES = 256;
 
 		/// <summary>Executes a process with the given command settings</summary>
 		/// <param name="settings">The settings.</param>
 		/// <returns>A Task with the return code of the process</returns>
-		public static async Task<uint> StartAsync(ProcessSettings settings)
+		public static RunningProcess StartAsync(ProcessSettings settings)
 		{
 			string commandLine = settings != null ? settings.Arguments : throw new ArgumentNullException(nameof(settings));
 			string fileName = settings.FileName;
@@ -25,7 +25,8 @@ namespace Loxifi
 			{
 				string exe = AssocQueryString(AssocStr.Executable, Path.GetExtension(settings.FileName));
 				commandLine = "\"" + settings.FileName + "\" " + settings.FileName;
-				fileName = exe;			}
+				fileName = exe;
+			}
 
 			if (!File.Exists(fileName))
 			{
@@ -43,9 +44,9 @@ namespace Loxifi
 				dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES,
 				wShowWindow = (short)settings.WindowStyle,
 				cb = Marshal.SizeOf(typeof(STARTUPINFO)),
-				hStdInput = inputPipe.ChildPtr,
-				hStdOutput = outputPipe.ChildPtr,
-				hStdError = errorPipe.ChildPtr
+				hStdInput = inputPipe.ReadPtr,
+				hStdOutput = outputPipe.WritePtr,
+				hStdError = errorPipe.WritePtr
 			};
 
 			IntPtr lpEnvironment = IntPtr.Zero;
@@ -83,30 +84,32 @@ namespace Loxifi
 				StreamDelegate errSd = new(settings.StdErrWrite, settings.StdErrWriteLine);
 				Task readError = new AsyncStreamReader(errorPipe.Reader!, new Action<string>(errSd.Write), new Action(errorPipe.Dispose)).TryReadAsync(cancellationToken);
 
-				try
+				RunningProcess runningProcess = new(settings);
+
+				runningProcess.StdInWrite += (sender, args) =>
 				{
-					Process process = Process.GetProcessById((int)p.dwProcessId);
-					process.WaitForExit();
-				}
-				catch (InvalidOperationException ex) when (ex.Message.Contains("has exited"))
+					inputPipe.Writer!.Write(args);
+					inputPipe.Writer!.Flush();
+				};
+
+				runningProcess.StdInWriteLine += (sender, args) =>
 				{
-				}
-				catch (ArgumentException ex) when (ex.Message.Contains("is not running"))
+					inputPipe.Writer!.WriteLine(args);
+					inputPipe.Writer!.Flush();
+				};
+
+				async Task CleanUp()
 				{
-				}
-				catch (Exception ex)
-				{
-					Debug.Write(ex.Message);
-					throw;
+					cancellationToken.Cancel();
+					await readOutput;
+					await readError;
+					_ = CloseHandle(p.hProcess);
+					_ = CloseHandle(p.hThread);
 				}
 
-				_ = GetExitCodeProcess(p.hProcess, out uint toReturn);
-				cancellationToken.Cancel();
-				await readOutput;
-				await readError;
-				_ = CloseHandle(p.hProcess);
-				_ = CloseHandle(p.hThread);
-				num = toReturn;
+				runningProcess.SetProcess(p, CleanUp);
+
+				return runningProcess;
 			}
 			finally
 			{
@@ -115,8 +118,6 @@ namespace Loxifi
 					_ = DestroyEnvironmentBlock(lpEnvironment);
 				}
 			}
-
-			return num;
 		}
 
 		/// <summary>Assocs the query string.</summary>
@@ -206,13 +207,6 @@ namespace Loxifi
 		/// <returns>A bool.</returns>
 		[DllImport("userenv")]
 		private static extern bool DestroyEnvironmentBlock(IntPtr lpEnvironment);
-
-		/// <summary>Gets the exit code process.</summary>
-		/// <param name="hProcess">The h process.</param>
-		/// <param name="ExitCode">The exit code.</param>
-		/// <returns>A bool.</returns>
-		[DllImport("kernel32.dll", SetLastError = true)]
-		private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint ExitCode);
 
 		/// <summary>
 		/// Attempts to resolve a file name into a full path using

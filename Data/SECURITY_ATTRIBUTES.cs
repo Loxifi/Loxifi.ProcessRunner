@@ -11,7 +11,7 @@ namespace Loxifi.Data
 		/// <summary>
 		/// nLength
 		/// </summary>
-		public uint nLength;
+		public int nLength;
 
 		/// <summary>
 		/// lpSecurityDescriptor

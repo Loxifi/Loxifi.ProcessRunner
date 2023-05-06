@@ -7,29 +7,37 @@ namespace Loxifi
 	{
 		private bool _disposedValue;
 
-		public Pipe(SafeFileHandle parentHandle, SafeFileHandle childHandle, bool isInput)
+		public Pipe(IntPtr hRead, IntPtr hWrite, bool isInput)
 		{
-			this.ParentHandle = parentHandle;
-			this.ChildHandle = childHandle;
-			this.ChildPtr = childHandle.DangerousGetHandle();
+			this.ReadFile = new SafeFileHandle(hRead, true);
+			this.WriteFile = new SafeFileHandle(hWrite, true);
+			this.WritePtr = hWrite;
+			this.ReadPtr = hRead;
 			this.IsInput = isInput;
+
 			if (this.IsInput)
 			{
-				return;
+				this.Writer = new StreamWriter(new FileStream(this.WriteFile, FileAccess.Write, 4096, false), Encoding.UTF8, 4096, true);
 			}
-
-			this.Reader = new StreamReader(new FileStream(this.ParentHandle, FileAccess.Read, 4096, false), Encoding.UTF8, true, 4096);
+			else
+			{
+				this.Reader = new StreamReader(new FileStream(this.ReadFile, FileAccess.Read, 4096, false), Encoding.UTF8, true, 4096);
+			}
 		}
-
-		public SafeFileHandle ChildHandle { get; }
-
-		public IntPtr ChildPtr { get; }
 
 		public bool IsInput { get; }
 
-		public SafeFileHandle ParentHandle { get; }
-
 		public StreamReader? Reader { get; }
+
+		public SafeFileHandle ReadFile { get; }
+
+		public IntPtr ReadPtr { get; }
+
+		public SafeFileHandle WriteFile { get; }
+
+		public IntPtr WritePtr { get; }
+
+		public StreamWriter? Writer { get; }
 
 		public void Dispose()
 		{
@@ -46,8 +54,10 @@ namespace Loxifi
 
 			if (disposing)
 			{
-				this.ParentHandle.Dispose();
-				this.ChildHandle.Dispose();
+				this.ReadFile.Dispose();
+				this.WriteFile.Dispose();
+				this.Reader?.Dispose();
+				this.Writer?.Dispose();
 			}
 
 			this._disposedValue = true;

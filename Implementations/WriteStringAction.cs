@@ -15,13 +15,13 @@ namespace Loxifi.Implementations
 		/// <param name="action">The action.</param>
 		public WriteStringAction(Action<string> action)
 		{
-			_action = action;
+			this._action = action;
 		}
 
 		/// <inheritdoc />
 		public void Write(string toWrite)
 		{
-			Action<string> action = _action;
+			Action<string> action = this._action;
 			if (action == null)
 			{
 				return;

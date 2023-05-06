@@ -18,7 +18,9 @@ namespace Loxifi
 	internal class AsyncStreamReader
 	{
 		private readonly IReadByte _byteSource;
+
 		private readonly Action? _close;
+
 		private readonly IWriteString _stringWriter;
 
 		/// <summary>
@@ -28,8 +30,8 @@ namespace Loxifi
 		/// <param name="stringWriter">A string writer to return read characters on</param>
 		public AsyncStreamReader(IReadByte byteSource, IWriteString stringWriter)
 		{
-			_byteSource = byteSource;
-			_stringWriter = stringWriter;
+			this._byteSource = byteSource;
+			this._stringWriter = stringWriter;
 		}
 
 		/// <summary>
@@ -40,9 +42,9 @@ namespace Loxifi
 		/// <param name="close">Ac action to call when the read has completed</param>
 		public AsyncStreamReader(StreamReader stream, Action<string> write, Action close)
 		{
-			_byteSource = new ReadByteStream(stream);
-			_stringWriter = new WriteStringAction(write);
-			_close = close;
+			this._byteSource = new ReadByteStream(stream);
+			this._stringWriter = new WriteStringAction(write);
+			this._close = close;
 		}
 
 		/// <summary>
@@ -71,7 +73,7 @@ namespace Loxifi
 					int num;
 					try
 					{
-						num = _byteSource.Read();
+						num = this._byteSource.Read();
 					}
 					catch (ObjectDisposedException)
 					{
@@ -97,7 +99,7 @@ namespace Loxifi
 					Monitor.Enter(writeLock);
 					if (sb.Length > 0)
 					{
-						_stringWriter.Write(sb.ToString());
+						this._stringWriter.Write(sb.ToString());
 						_ = sb.Clear();
 						lastWrite = DateTime.Now;
 						goto label_16;
@@ -108,7 +110,7 @@ namespace Loxifi
 						{
 							if (lastLoop)
 							{
-								Action close = _close;
+								Action close = this._close;
 								if (close != null)
 								{
 									close();

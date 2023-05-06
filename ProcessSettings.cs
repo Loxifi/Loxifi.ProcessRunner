@@ -27,6 +27,7 @@ namespace Loxifi
 		/// </summary>
 		public EventHandler<string>? StdOutWriteLine;
 
+		//TODO: Move this somewhere that makes more sense
 		/// <summary>
 		/// Constructs a new instace of this class with the specified file name
 		/// </summary>
@@ -57,14 +58,14 @@ namespace Loxifi
 		public ProcessCredentials? Credentials { get; set; }
 
 		/// <summary>
-		/// Create the process in a Unicode environment
-		/// </summary>
-		public bool UnicodeEnvironment { get; set; }
-
-		/// <summary>
 		/// The file or path to execute.
 		/// </summary>
 		public string FileName { get; private set; }
+
+		/// <summary>
+		/// Create the process in a Unicode environment
+		/// </summary>
+		public bool UnicodeEnvironment { get; set; }
 
 		/// <summary>
 		/// Gets or sets the window style.

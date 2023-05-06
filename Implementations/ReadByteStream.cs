@@ -16,7 +16,7 @@ namespace Loxifi.Implementations
 		/// <param name="baseStream">The base stream.</param>
 		public ReadByteStream(StreamReader baseStream)
 		{
-			_baseStream = baseStream ?? throw new ArgumentNullException(nameof(baseStream));
+			this._baseStream = baseStream ?? throw new ArgumentNullException(nameof(baseStream));
 		}
 
 		/// <summary>Reads a single byte off a stream</summary>
@@ -27,7 +27,7 @@ namespace Loxifi.Implementations
 			while (true)
 			{
 				buffer = new char[1];
-				if (_baseStream.Read((Span<char>)buffer) != 1)
+				if (this._baseStream.Read((Span<char>)buffer) != 1)
 				{
 					Thread.Sleep(5);
 				}

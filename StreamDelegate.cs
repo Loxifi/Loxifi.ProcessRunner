@@ -5,8 +5,11 @@ namespace Loxifi
 	internal class StreamDelegate : IDisposable
 	{
 		private readonly StringBuilder? _lineBuffer;
+
 		private readonly EventHandler<string>? _writeHandler;
+
 		private readonly EventHandler<string>? _writeLineHandler;
+
 		private bool _disposedValue;
 
 		public StreamDelegate(EventHandler<string>? writeHandler, EventHandler<string>? writeLineHandler)

@@ -17,11 +17,12 @@ namespace Loxifi
 
 			if (this.IsInput)
 			{
-				this.Writer = new StreamWriter(new FileStream(this.WriteFile, FileAccess.Write, 4096, false), Encoding.UTF8, 4096, true);
+				Encoding utf8WithoutBom = new UTF8Encoding(false);
+				this.Writer = new StreamWriter(new FileStream(this.WriteFile, FileAccess.Write, 4096, false), utf8WithoutBom, 4096, true);
 			}
 			else
 			{
-				this.Reader = new StreamReader(new FileStream(this.ReadFile, FileAccess.Read, 4096, false), Encoding.UTF8, true, 4096);
+				this.Reader = new StreamReader(new FileStream(this.ReadFile, FileAccess.Read, 4096, false), true);
 			}
 		}
 

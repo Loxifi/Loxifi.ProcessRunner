@@ -2,43 +2,43 @@
 
 namespace Loxifi.Data
 {
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct STARTUPINFO
-	{
-		public int cb;
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct STARTUPINFO
+    {
+        public int cb;
 
-		public IntPtr lpReserved;
+        public IntPtr lpReserved;
 
-		public IntPtr lpDesktop;
+        public IntPtr lpDesktop;
 
-		public IntPtr lpTitle;
+        public IntPtr lpTitle;
 
-		public int dwX;
+        public int dwX;
 
-		public int dwY;
+        public int dwY;
 
-		public int dwXSize;
+        public int dwXSize;
 
-		public int dwYSize;
+        public int dwYSize;
 
-		public int dwXCountChars;
+        public int dwXCountChars;
 
-		public int dwYCountChars;
+        public int dwYCountChars;
 
-		public int dwFillAttribute;
+        public int dwFillAttribute;
 
-		public int dwFlags;
+        public int dwFlags;
 
-		public short wShowWindow;
+        public short wShowWindow;
 
-		public short cbReserved2;
+        public short cbReserved2;
 
-		public IntPtr lpReserved2;
+        public IntPtr lpReserved2;
 
-		public IntPtr hStdInput;
+        public IntPtr hStdInput;
 
-		public IntPtr hStdOutput;
+        public IntPtr hStdOutput;
 
-		public IntPtr hStdError;
-	}
+        public IntPtr hStdError;
+    }
 }

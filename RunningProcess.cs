@@ -5,71 +5,74 @@ using System.Runtime.InteropServices;
 
 namespace Loxifi
 {
-	/// <summary>
-	/// Represents an instance of a running process
-	/// </summary>
-	public class RunningProcess
-	{
-		internal EventHandler<string>? StdInWrite;
+    /// <summary>
+    /// Represents an instance of a running process
+    /// </summary>
+    public class RunningProcess
+    {
+        internal EventHandler<string>? StdInWrite;
 
-		internal EventHandler<string>? StdInWriteLine;
+        internal EventHandler<string>? StdInWriteLine;
 
-		internal RunningProcess(ProcessSettings settings)
-		{
-			this.Settings = settings;
-		}
+        internal RunningProcess(ProcessSettings settings, string commandLine)
+        {
+            this.Settings = settings;
+            this.CommandLine = commandLine;
+        }
 
-		public Task<uint> ExitCode { get; private set; }
+        public string CommandLine { get; private set; }
 
-		public ProcessSettings Settings { get; }
+        public Task<uint> ExitCode { get; private set; }
 
-		public TaskAwaiter<uint> GetAwaiter() => this.ExitCode.GetAwaiter();
+        public ProcessSettings Settings { get; }
 
-		/// <summary>
-		/// Invoke me to write to the executing process
-		/// </summary>
-		public void Write(string toWrite) => this.StdInWrite?.Invoke(this, toWrite);
+        public TaskAwaiter<uint> GetAwaiter() => this.ExitCode.GetAwaiter();
 
-		/// <summary>
-		/// Invoke me to write a new line to the executing process
-		/// </summary>
-		public void WriteLine(string toWrite) => this.StdInWriteLine?.Invoke(this, toWrite);
+        /// <summary>
+        /// Invoke me to write to the executing process
+        /// </summary>
+        public void Write(string toWrite) => this.StdInWrite?.Invoke(this, toWrite);
 
-		internal void SetProcess(PROCESS_INFORMATION p, Func<Task> cleanup)
-		{
-			this.ExitCode = Task.Run(async () =>
-			{
-				try
-				{
-					Process process = Process.GetProcessById((int)p.dwProcessId);
+        /// <summary>
+        /// Invoke me to write a new line to the executing process
+        /// </summary>
+        public void WriteLine(string toWrite) => this.StdInWriteLine?.Invoke(this, toWrite);
 
-					process.WaitForExit();
-				}
-				catch (InvalidOperationException ex) when (ex.Message.Contains("has exited"))
-				{
-				}
-				catch (ArgumentException ex) when (ex.Message.Contains("is not running"))
-				{
-				}
-				catch (Exception ex)
-				{
-					Debug.Write(ex.Message);
-					throw;
-				}
+        internal void SetProcess(PROCESS_INFORMATION p, Func<Task> cleanup)
+        {
+            this.ExitCode = Task.Run(async () =>
+            {
+                try
+                {
+                    Process process = Process.GetProcessById((int)p.dwProcessId);
 
-				_ = GetExitCodeProcess(p.hProcess, out uint toReturn);
+                    process.WaitForExit();
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("has exited"))
+                {
+                }
+                catch (ArgumentException ex) when (ex.Message.Contains("is not running"))
+                {
+                }
+                catch (Exception ex)
+                {
+                    Debug.Write(ex.Message);
+                    throw;
+                }
 
-				await cleanup.Invoke();
+                _ = GetExitCodeProcess(p.hProcess, out uint toReturn);
 
-				return toReturn;
-			});
-		}
+                await cleanup.Invoke();
 
-		/// <summary>Gets the exit code process.</summary>
-		/// <param name="hProcess">The h process.</param>
-		/// <param name="exitCode">The exit code.</param>
-		/// <returns>A bool.</returns>
-		[DllImport("kernel32.dll", SetLastError = true)]
-		private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint exitCode);
-	}
+                return toReturn;
+            });
+        }
+
+        /// <summary>Gets the exit code process.</summary>
+        /// <param name="hProcess">The h process.</param>
+        /// <param name="exitCode">The exit code.</param>
+        /// <returns>A bool.</returns>
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint exitCode);
+    }
 }

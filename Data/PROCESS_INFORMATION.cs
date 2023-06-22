@@ -2,15 +2,15 @@
 
 namespace Loxifi.Data
 {
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct PROCESS_INFORMATION
-	{
-		public IntPtr hProcess;
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct PROCESS_INFORMATION
+    {
+        public IntPtr hProcess;
 
-		public IntPtr hThread;
+        public IntPtr hThread;
 
-		public uint dwProcessId;
+        public uint dwProcessId;
 
-		public uint dwThreadId;
-	}
+        public uint dwThreadId;
+    }
 }

@@ -11,130 +11,130 @@ using System.Text;
 
 namespace Loxifi
 {
-	/// <summary>
-	/// Takes an underlying byte-by-byte reader and wraps it
-	/// to produce a readable character stream
-	/// </summary>
-	internal class AsyncStreamReader
-	{
-		private readonly IReadByte _byteSource;
+    /// <summary>
+    /// Takes an underlying byte-by-byte reader and wraps it
+    /// to produce a readable character stream
+    /// </summary>
+    internal class AsyncStreamReader
+    {
+        private readonly IReadByte _byteSource;
 
-		private readonly Action? _close;
+        private readonly Action? _close;
 
-		private readonly IWriteString _stringWriter;
+        private readonly IWriteString _stringWriter;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Loxifi.AsyncStreamReader" /> class.
-		/// </summary>
-		/// <param name="byteSource">The byte source.</param>
-		/// <param name="stringWriter">A string writer to return read characters on</param>
-		public AsyncStreamReader(IReadByte byteSource, IWriteString stringWriter)
-		{
-			this._byteSource = byteSource;
-			this._stringWriter = stringWriter;
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:Loxifi.AsyncStreamReader" /> class.
+        /// </summary>
+        /// <param name="byteSource">The byte source.</param>
+        /// <param name="stringWriter">A string writer to return read characters on</param>
+        public AsyncStreamReader(IReadByte byteSource, IWriteString stringWriter)
+        {
+            this._byteSource = byteSource;
+            this._stringWriter = stringWriter;
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Loxifi.AsyncStreamReader" /> class.
-		/// </summary>
-		/// <param name="stream">The byte source.</param>
-		/// <param name="write">A string action to return read characters on</param>
-		/// <param name="close">Ac action to call when the read has completed</param>
-		public AsyncStreamReader(StreamReader stream, Action<string> write, Action close)
-		{
-			this._byteSource = new ReadByteStream(stream);
-			this._stringWriter = new WriteStringAction(write);
-			this._close = close;
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:Loxifi.AsyncStreamReader" /> class.
+        /// </summary>
+        /// <param name="stream">The byte source.</param>
+        /// <param name="write">A string action to return read characters on</param>
+        /// <param name="close">Ac action to call when the read has completed</param>
+        public AsyncStreamReader(StreamReader stream, Action<string> write, Action close)
+        {
+            this._byteSource = new ReadByteStream(stream);
+            this._stringWriter = new WriteStringAction(write);
+            this._close = close;
+        }
 
-		/// <summary>
-		/// Reads off the underlying data stream and returns the results byte by byte
-		/// </summary>
-		/// <param name="token"></param>
-		/// <param name="loopTime"></param>
-		/// <returns></returns>
-		/// <exception cref="T:System.ArgumentNullException"></exception>
-		public async Task TryReadAsync(ProcessCancellationToken token, int loopTime = 50)
-		{
-			if (token == null)
-			{
-				throw new ArgumentNullException(nameof(token));
-			}
+        /// <summary>
+        /// Reads off the underlying data stream and returns the results byte by byte
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="loopTime"></param>
+        /// <returns></returns>
+        /// <exception cref="T:System.ArgumentNullException"></exception>
+        public async Task TryReadAsync(ProcessCancellationToken token, int loopTime = 50)
+        {
+            if (token == null)
+            {
+                throw new ArgumentNullException(nameof(token));
+            }
 
-			object writeLock = new();
-			StringBuilder sb = new();
-			ManualResetEvent threadGate = new(false);
-			Thread t = new(() =>
-			{
-				Monitor.Enter(writeLock);
-				while (true)
-				{
-					Monitor.Exit(writeLock);
-					int num;
-					try
-					{
-						num = this._byteSource.Read();
-					}
-					catch (ObjectDisposedException)
-					{
-						_ = threadGate.Set();
-						break;
-					}
+            object writeLock = new();
+            StringBuilder sb = new();
+            ManualResetEvent threadGate = new(false);
+            Thread t = new(() =>
+            {
+                Monitor.Enter(writeLock);
+                while (true)
+                {
+                    Monitor.Exit(writeLock);
+                    int num;
+                    try
+                    {
+                        num = this._byteSource.Read();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        _ = threadGate.Set();
+                        break;
+                    }
 
-					Monitor.Enter(writeLock);
-					if (num != -1)
-					{
-						_ = sb.Append((char)num);
-					}
-				}
-			});
-			t.Start();
-			bool lastLoop = false;
-			DateTime lastWrite = DateTime.Now;
-			while (true)
-			{
-				await Task.Delay(loopTime);
-				try
-				{
-					Monitor.Enter(writeLock);
-					if (sb.Length > 0)
-					{
-						this._stringWriter.Write(sb.ToString());
-						_ = sb.Clear();
-						lastWrite = DateTime.Now;
-						goto label_16;
-					}
-					else if ((DateTime.Now - lastWrite).TotalMilliseconds > loopTime)
-					{
-						if (token.IsCancelled)
-						{
-							if (lastLoop)
-							{
-								Action close = this._close;
-								if (close != null)
-								{
-									close();
-									break;
-								}
+                    Monitor.Enter(writeLock);
+                    if (num != -1)
+                    {
+                        _ = sb.Append((char)num);
+                    }
+                }
+            });
+            t.Start();
+            bool lastLoop = false;
+            DateTime lastWrite = DateTime.Now;
+            while (true)
+            {
+                await Task.Delay(loopTime);
+                try
+                {
+                    Monitor.Enter(writeLock);
+                    if (sb.Length > 0)
+                    {
+                        this._stringWriter.Write(sb.ToString());
+                        _ = sb.Clear();
+                        lastWrite = DateTime.Now;
+                        goto label_16;
+                    }
+                    else if ((DateTime.Now - lastWrite).TotalMilliseconds > loopTime)
+                    {
+                        if (token.IsCancelled)
+                        {
+                            if (lastLoop)
+                            {
+                                Action close = this._close;
+                                if (close != null)
+                                {
+                                    close();
+                                    break;
+                                }
 
-								break;
-							}
+                                break;
+                            }
 
-							lastLoop = true;
-						}
-					}
-				}
-				finally
-				{
-					Monitor.Exit(writeLock);
-				}
+                            lastLoop = true;
+                        }
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(writeLock);
+                }
 
-			label_16:
-				;
-			}
+            label_16:
+                ;
+            }
 
-			_ = threadGate.WaitOne();
-			t = null;
-		}
-	}
+            _ = threadGate.WaitOne();
+            t = null;
+        }
+    }
 }

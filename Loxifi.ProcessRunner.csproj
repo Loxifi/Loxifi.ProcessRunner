@@ -5,7 +5,7 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<PackageProjectUrl>http://loxifi.com/Projects/Loxifi.ProcessRunner</PackageProjectUrl>
-		<Version>0.8.2</Version>
+		<Version>0.8.6</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageIcon>Properties\Icon.png</PackageIcon>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

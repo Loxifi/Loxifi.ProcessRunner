@@ -64,6 +64,8 @@ namespace Loxifi
             object writeLock = new();
             StringBuilder sb = new();
             ManualResetEvent threadGate = new(false);
+            Exception? thrown = null;
+
             Thread t = new(() =>
             {
                 Monitor.Enter(writeLock);
@@ -77,6 +79,12 @@ namespace Loxifi
                     }
                     catch (ObjectDisposedException)
                     {
+                        _ = threadGate.Set();
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        thrown = e;
                         _ = threadGate.Set();
                         break;
                     }
@@ -102,7 +110,7 @@ namespace Loxifi
                         this._stringWriter.Write(sb.ToString());
                         _ = sb.Clear();
                         lastWrite = DateTime.Now;
-                        goto label_16;
+                        continue;
                     }
                     else if ((DateTime.Now - lastWrite).TotalMilliseconds > loopTime)
                     {
@@ -110,13 +118,7 @@ namespace Loxifi
                         {
                             if (lastLoop)
                             {
-                                Action close = this._close;
-                                if (close != null)
-                                {
-                                    close();
-                                    break;
-                                }
-
+                                this._close?.Invoke();
                                 break;
                             }
 
@@ -128,13 +130,14 @@ namespace Loxifi
                 {
                     Monitor.Exit(writeLock);
                 }
-
-            label_16:
-                ;
             }
 
             _ = threadGate.WaitOne();
-            t = null;
+
+            if(thrown is not null)
+            {
+                throw thrown;
+            }
         }
     }
 }
